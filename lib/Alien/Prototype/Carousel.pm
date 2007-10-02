@@ -6,14 +6,17 @@ package Alien::Prototype::Carousel;
 use strict;
 use warnings;
 use Carp;
+use File::Spec;
 use File::Copy qw(copy);
 use File::Path qw(mkpath);
+use File::Basename qw(dirname);
+use Alien::scriptaculous;
 
 ###############################################################################
 # Version number
 ###############################################################################
 our $CAROUSEL_VERSION = '0.26';
-our $VERSION = '0.26.1';
+our $VERSION = '0.26.2';
 
 ###############################################################################
 # Subroutine:   version()
@@ -39,6 +42,31 @@ sub path {
 }
 
 ###############################################################################
+# Subroutine:   to_blib()
+###############################################################################
+# Returns a hash containing paths to the source files to be copied, and their
+# relative destinations.
+###############################################################################
+sub to_blib {
+    my $class = shift;
+    my $path  = $class->path();
+    my @files = qw( carousel.js carousel.css );
+    my %blib  = map { (File::Spec->catfile($path,$_) => $_) } @files;
+    return %blib;
+}
+
+###############################################################################
+# Subroutine:   files()
+###############################################################################
+# Returns the list of files that are installed by Alien::Prototype::Carousel.
+###############################################################################
+sub files {
+    my $class = shift;
+    my %blib  = $class->to_blib();
+    return sort values %blib;
+}
+
+###############################################################################
 # Subroutine:   install($destdir)
 # Parameters:   $destdir    - Destination directory.
 ###############################################################################
@@ -47,15 +75,22 @@ sub path {
 ###############################################################################
 sub install {
     my ($class, $destdir) = @_;
-    if (!-d $destdir) {
-        mkpath( [$destdir] ) || croak "can't create '$destdir'; $!";
-    }
-    my $path = $class->path();
 
-    # Install files
-    my @files = grep { -f $_ } glob "$path/*.*s";
-    foreach my $file (@files) {
-        copy( $file, $destdir ) || croak "can't copy '$file' to '$destdir'; $!";
+    # install script.aculo.us
+    Alien::scriptaculous->install( $destdir );
+
+    # install our files
+    my %blib = $class->to_blib();
+    while (my ($srcfile, $dest) = each %blib) {
+        # get full path to destination file
+        my $destfile = File::Spec->catfile( $destdir, $dest );
+        # create any required install directories
+        my $instdir = dirname( $destfile );
+        if (!-d $instdir) {
+            mkpath( $instdir ) || croak "can't create '$instdir'; $!";
+        }
+        # install the file
+        copy( $srcfile, $destfile ) || croak "can't copy '$srcfile' to '$instdir'; $!";
     }
 }
 
@@ -93,6 +128,15 @@ Not to be confused with the C<Alien::Prototype::Carousel> version number
 
 Returns the path to the available copy of the Prototype Carousel component. 
 
+=item to_blib()
+
+Returns a hash containing paths to the source files to be copied, and their
+relative destinations. 
+
+=item files()
+
+Returns the list of files that are installed by Alien::Prototype::Carousel. 
+
 =item install($destdir)
 
 Installs the Prototype Carousel component into the given C<$destdir>.
@@ -113,6 +157,7 @@ This is free software; you can redistribute it and/or modify it under the same t
 =head1 SEE ALSO
 
 http://prototype-carousel.xilinus.com/,
+L<Alien::scriptaculous>,
 L<Alien>.
 
 =cut
