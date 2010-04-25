@@ -1,5 +1,8 @@
 Revision history for Perl extension Alien::Prototype::Carousel.
 
+0.26.3  Fri Apr 23 22:21 PDT 2010
+    - Switch to Git.
+
 0.26.2  Tue Oct  2 11:44 PDT 2007
     - added POD coverage tests
     - now depends on Alien::scriptaculous
